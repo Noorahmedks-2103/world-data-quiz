@@ -104,16 +104,21 @@ def run_quiz():
     st.title("🌍 World Data Quiz")
     st.write("Test your knowledge of world geography, culture, and data!")
 
-    # Auto-refresh every 5 seconds (optional)
-    st_autorefresh(interval=5000, limit=None, key="quiz_autorefresh")
+    # Auto-refresh every 5 seconds (only AFTER name is entered)
+    if st.session_state.get("player_name"):
+        st_autorefresh(interval=5000, limit=None, key="quiz_autorefresh")
 
-    # Player Name Input (session_state-safe)
-    if "player_name" not in st.session_state:
-        st.session_state.player_name = st.text_input("Enter your name to start:")
+    # ---------------------------
+    # Fixed Name Input
+    # ---------------------------
+    st.session_state.player_name = st.text_input(
+        "Enter your name to start:",
+        value=st.session_state.get("player_name", "")
+    )
 
-    if not st.session_state.player_name:
-        st.warning("Please enter your name to play.")
-        return
+    if not st.session_state.player_name.strip():
+        st.warning("Please enter your full name to play.")
+        st.stop()
 
     # Load and Shuffle Questions
     questions = load_questions()
