@@ -1,5 +1,6 @@
-streamlit
-pandas
+oauth2client
 gspread
-google-auth
-pygame
+pandas
+streamlit
+plotly
+streamlit-autorefresh
