@@ -26,11 +26,11 @@ st.markdown(
 # ---------------------------
 # CONFIG: Google Sheets Setup
 # ---------------------------
-SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSHsnW8a2k50iqPbKdItI8Qukr9pobP1byaqO0s8qnfVPPDCQEkyBQLQ6KUHm6vWdIMwKuljBTGFYCk/pubhtml?gid=0&single=true"
+SHEET_URL = "https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID_HERE/edit#gid=0"
 
 def authenticate_google_sheets():
-    creds_json = st.secrets["gcp_service_account"]["creds"]
-    creds_dict = json.loads(creds_json)
+    # Load credentials from Streamlit secrets
+    creds_dict = json.loads(st.secrets["gcp_service_account"]["creds"])
     creds = ServiceAccountCredentials.from_json_keyfile_dict(
         creds_dict,
         ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -104,21 +104,16 @@ def run_quiz():
     st.title("🌍 World Data Quiz")
     st.write("Test your knowledge of world geography, culture, and data!")
 
-    # Auto-refresh every 5 seconds (only AFTER name is entered)
-    if st.session_state.get("player_name"):
-        st_autorefresh(interval=5000, limit=None, key="quiz_autorefresh")
+    # Auto-refresh every 5 seconds (optional)
+    st_autorefresh(interval=5000, limit=None, key="quiz_autorefresh")
 
-    # ---------------------------
-    # Fixed Name Input
-    # ---------------------------
-    st.session_state.player_name = st.text_input(
-        "Enter your name to start:",
-        value=st.session_state.get("player_name", "")
-    )
+    # Player Name Input (session_state-safe)
+    if "player_name" not in st.session_state:
+        st.session_state.player_name = st.text_input("Enter your name to start:")
 
-    if not st.session_state.player_name.strip():
-        st.warning("Please enter your full name to play.")
-        st.stop()
+    if not st.session_state.player_name:
+        st.warning("Please enter your name to play.")
+        return
 
     # Load and Shuffle Questions
     questions = load_questions()
@@ -251,32 +246,8 @@ def run_quiz():
                     unsafe_allow_html=True
                 )
 
-        st.subheader("📊 Top Players - Final Visual Ranking")
-        show_leaderboard_chart(top5)
-
-        # Show player's rank
-        rank_df = leaderboard.reset_index()
-        player_rank = rank_df.index[rank_df['Name']==st.session_state.player_name][0] + 1
-
-        # Personalized congratulations
-        if player_rank == 1:
-            st.success(f"🏆 Amazing {st.session_state.player_name}! You are the top scorer! 👑")
-            st.balloons()
-            st.audio("winner.mp3", format="audio/mp3")
-        elif player_rank <= 3:
-            st.success(f"🎉 Great job {st.session_state.player_name}! You are in the top 3! 🥳")
-        else:
-            st.info(f"👏 Well done {st.session_state.player_name}! Your final rank: #{player_rank}")
-
-        # Restart Quiz Button
-        if st.button("🔄 Play Again"):
-            for key in ["shuffled_questions", "current_q", "score", "colors"]:
-                if key in st.session_state:
-                    del st.session_state[key]
-            st.experimental_rerun()
-
 # ---------------------------
-# Run the App
+# RUN THE APP
 # ---------------------------
 if __name__ == "__main__":
     run_quiz()
